@@ -1,0 +1,19 @@
+# Abaikan file yang berisi password atau kredensial sensitif
+.env
+secrets.csv
+credentials.json
+
+# Abaikan file sampah/cache bawaan dari sistem Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Abaikan file sistem operasi Windows
+Thumbs.db
+desktop.ini
+
+# Abaikan folder Virtual Environment (jika nanti Anda menggunakannya)
+venv/
+.venv/
+env/	
