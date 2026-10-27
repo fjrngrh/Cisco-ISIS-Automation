@@ -1,0 +1,24 @@
+---
+- name: Network Configuration Backup
+  hosts: cisco_routers
+  gather_facts: no
+
+  tasks:
+    - name: Membuat direktori "backups" di lokal Pop!_OS
+      delegate_to: localhost
+      run_once: true
+      ansible.builtin.file:
+        path: ./backups
+        state: directory
+        mode: '0755'
+
+    - name: Mengambil running-config dari router
+      cisco.ios.ios_command:
+        commands: show running-config
+      register: config_output
+
+    - name: Menyimpan konfigurasi ke dalam file TXT
+      delegate_to: localhost
+      ansible.builtin.copy:
+        content: "{{ config_output.stdout[0] }}"
+        dest: "./backups/{{ inventory_hostname }}_running_config.txt"

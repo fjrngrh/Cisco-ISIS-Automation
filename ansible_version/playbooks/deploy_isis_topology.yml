@@ -1,0 +1,77 @@
+---
+- name: Automated IS-IS Network Deployment
+  hosts: cisco_routers
+  gather_facts: no
+
+  tasks:
+    - name: Konfigurasi Global IS-IS (Semua Router)
+      cisco.ios.ios_config:
+        lines:
+          - net 49.0001.0000.0000.000{{ inventory_hostname | replace('R', '') }}.00
+          - is-type level-2-only
+          - metric-style wide
+          - log-adjacency-changes
+        parents: router isis 1
+
+    - name: Konfigurasi Interface Loopback0 (Semua Router)
+      cisco.ios.ios_config:
+        lines:
+          - ip address 10.10.10.{{ inventory_hostname | replace('R', '') }} 255.255.255.255
+          - ip router isis 1
+        parents: interface Loopback0
+
+    - name: Konfigurasi Interface Fisik R1
+      cisco.ios.ios_config:
+        lines:
+          - ip address {{ item.ip }} 255.255.255.0
+          - ip router isis 1
+          - no shutdown
+        parents: interface {{ item.intf }}
+      loop:
+        - { intf: 'GigabitEthernet0/1', ip: '10.0.12.1' }
+        - { intf: 'GigabitEthernet0/2', ip: '10.0.13.1' }
+      when: inventory_hostname == 'R1'
+
+    - name: Konfigurasi Interface Fisik R2
+      cisco.ios.ios_config:
+        lines:
+          - ip address {{ item.ip }} 255.255.255.0
+          - ip router isis 1
+          - no shutdown
+        parents: interface {{ item.intf }}
+      loop:
+        - { intf: 'GigabitEthernet0/1', ip: '10.0.12.2' }
+        - { intf: 'GigabitEthernet0/2', ip: '10.0.23.2' }
+      when: inventory_hostname == 'R2'
+
+    - name: Konfigurasi Interface Fisik R3
+      cisco.ios.ios_config:
+        lines:
+          - ip address {{ item.ip }} 255.255.255.0
+          - ip router isis 1
+          - isis metric {{ item.metric | default('10') }}
+          - no shutdown
+        parents: interface {{ item.intf }}
+      loop:
+        - { intf: 'GigabitEthernet0/1', ip: '10.0.23.3' }
+        - { intf: 'GigabitEthernet0/2', ip: '10.0.34.3', metric: '10' }
+        - { intf: 'GigabitEthernet0/3', ip: '10.0.35.3', metric: '50' }
+        - { intf: 'GigabitEthernet0/4', ip: '10.0.13.3' }
+      when: inventory_hostname == 'R3'
+
+    - name: Konfigurasi Interface Fisik R4
+      cisco.ios.ios_config:
+        lines:
+          - ip address {{ item.ip }} 255.255.255.0
+          - ip router isis 1
+          - isis metric {{ item.metric | default('10') }}
+          - no shutdown
+        parents: interface {{ item.intf }}
+      loop:
+        - { intf: 'GigabitEthernet0/1', ip: '10.0.34.4', metric: '10' }
+        - { intf: 'GigabitEthernet0/2', ip: '10.0.35.4', metric: '50' }
+      when: inventory_hostname == 'R4'
+
+    - name: Simpan Konfigurasi ke NVRAM (Write Memory)
+      cisco.ios.ios_config:
+        save_when: modified
